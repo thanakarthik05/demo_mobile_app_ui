@@ -25,16 +25,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="detailpage"
+        name="user"
         options={{
           title: 'user',
           tabBarIcon: ({ color }) => 
-          // <IconSymbol size={28} name="person.circle" color={color} />,
           <FontAwesome name="user" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="cart"
+        name="cartlist"
         options={{
           title: 'Cart',
           tabBarIcon: ({ color }) => (

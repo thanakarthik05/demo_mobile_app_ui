@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { addToCart } from "../utils/cartStorage";
+import { addToCart } from "./utils/cartStorage";
 
 import {
   ActivityIndicator,
@@ -26,7 +26,7 @@ export default function ProductDetail() {
   const { id } = useLocalSearchParams();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
-
+    console.log("ist working cart page")
   // ✔ Quantity state
   const [qty, setQty] = useState(1);
 
@@ -70,7 +70,7 @@ export default function ProductDetail() {
   const popup_btn=()=>{
     setVisible(false),
     setQty(1),
-    router.replace("/(tabs)");
+    router.replace("/(tabs)/cartlist");
   }
   if (loading) {
     return (

@@ -48,19 +48,19 @@ export default function HomeScreen() {
     fetchProducts();
   }, []);
 
-  /* -------------------- CART LOGIC -------------------- */
-  const addToCart = (product: Product) => {
-    const existing = cart.find(i => i.id === product.id);
-    if (existing) {
-      setCart(
-        cart.map(item =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
-        )
-      );
-    } else {
-      setCart([...cart, { ...product, quantity: 1 }]);
-    }
-  };
+  /* -------------------- CART LOGIC ------------------- */
+  // const addToCart = (product: Product) => {
+  //   const existing = cart.find(i => i.id === product.id);
+  //   if (existing) {
+  //     setCart(
+  //       cart.map(item =>
+  //         item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+  //       )
+  //     );
+  //   } else {
+  //     setCart([...cart, { ...product, quantity: 1 }]);
+  //   }
+  // };
 
   /* -------------------- NAVIGATE TO DETAIL -------------------- */
   const goToDetail = (id: number) => {
@@ -70,8 +70,8 @@ export default function HomeScreen() {
     }
 
     // navigate with query param
-    // router.push(`/productdetail?id=${id}`);
-    router.push(`/cart?id=${id}`);
+    router.push(`/cartpage?id=${id}`);
+    // router.push(`/cart?id=${id}`);
   };
 
   /* -------------------- FILTER LOGIC -------------------- */
@@ -135,36 +135,24 @@ export default function HomeScreen() {
         ))}
       </ScrollView>
 
-      <ThemedView style={styles.productsContainer}>
-        {filteredProducts.map(product => (
-          <View key={product.id} style={styles.productCard}>
-            <Image source={{ uri: product.image }} style={styles.productImage} />
-            <View style={styles.productInfo}>
-              <ThemedText type="defaultSemiBold" style={styles.productName}>
-                {product.title}
-              </ThemedText>
-              <ThemedText style={styles.productCategory}>
-                {product.category}
-              </ThemedText>
+      <ThemedView style={styles.productsGrid}>
+  {filteredProducts.map(product => (
+    <TouchableOpacity
+      key={product.id}
+      style={styles.productCard}
+      onPress={() => goToDetail(product.id)}
+    >
+      <Image source={{ uri: product.image }} style={styles.productImage} />
 
-              <View style={styles.productFooter}>
-                <ThemedText type="defaultSemiBold" style={styles.productPrice}>
-                  ${product.price}
-                </ThemedText>
+      <ThemedText numberOfLines={2} style={styles.productName}>
+        {product.title}
+      </ThemedText>
 
-                {/* ✔ FIXED VIEW DETAIL BUTTON */}
-                <TouchableOpacity
-                  onPress={() => goToDetail(product.id)}
-                  style={styles.addButton}
-                >
-                  <Text style={styles.addButtonText}>Add to Cart</Text>
-                </TouchableOpacity>
+      <ThemedText style={styles.productPrice}>${product.price}</ThemedText>
+    </TouchableOpacity>
+  ))}
+</ThemedView>
 
-              </View>
-            </View>
-          </View>
-        ))}
-      </ThemedView>
     </ScrollView>
   );
 }
@@ -205,15 +193,24 @@ const styles = StyleSheet.create({
   categoryButtonActive: { backgroundColor: '#007AFF' },
   categoryText: { fontSize: 14, color: '#333' },
   categoryTextActive: { color: '#fff', fontWeight: 'bold' },
+
+  productsGrid: {
+  flexDirection: "row",
+  flexWrap: "wrap",
+  justifyContent: "space-between",
+  paddingHorizontal: 10,
+},
+
   productsContainer: { padding: 20 },
   productCard: {
+    width: "48%",     
     backgroundColor: '#fff',
-    borderRadius: 15,
-    overflow: 'hidden',
+    borderRadius: 10,
     marginBottom: 15,
+    padding:10,
     elevation: 3,
   },
-  productImage: { width: '100%', height: 200 },
+  productImage: { width: '100%', height: 150 },
   productInfo: { padding: 15 },
   productName: { fontSize: 18 },
   productCategory: { fontSize: 12, color: '#666' },
