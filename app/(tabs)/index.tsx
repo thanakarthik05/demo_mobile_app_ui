@@ -68,10 +68,7 @@ export default function HomeScreen() {
       console.log("❌ Cannot navigate, no id found");
       return;
     }
-
-    // navigate with query param
-    router.push(`/cartpage?id=${id}`);
-    // router.push(`/cart?id=${id}`);
+    router.push(`/(tabs)/cart/cart?id=${id}`);
   };
 
   /* -------------------- FILTER LOGIC -------------------- */

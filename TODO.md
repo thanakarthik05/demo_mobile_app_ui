@@ -1,0 +1,3 @@
+- [x] Added cart screen to tabs layout as visible tab with icon
+- [x] Updated home screen navigation to use cart screen inside tabs
+- [x] Updated cart screen popup navigation to go to cartlist tab

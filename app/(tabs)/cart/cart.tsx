@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { addToCart } from "../utils/cartStorage";
+import { addToCart } from "../../utils/cartStorage";
 
 import {
   ActivityIndicator,

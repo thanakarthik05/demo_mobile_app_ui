@@ -35,10 +35,14 @@ export default function TabLayout() {
       <Tabs.Screen
         name="cartlist"
         options={{
-          title: 'Cart',
-          tabBarIcon: ({ color }) => (
-            <FontAwesome size={28} name="cart-plus" color={color} />
-          ),
+          title: 'cart',
+          tabBarIcon: ({ color }) => <FontAwesome size={28} name="shopping-bag" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="cart/cart"
+        options={{
+          href: null,     // <--- Hides from tab bar  ****if is not ass
         }}
       />
 
