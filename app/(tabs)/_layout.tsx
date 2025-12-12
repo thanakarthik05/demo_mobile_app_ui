@@ -2,7 +2,6 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 
 import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
 import { FontAwesome } from '@expo/vector-icons';
 
 import { Colors } from '@/constants/theme';
@@ -26,9 +25,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="detailpage"
         options={{
-          title: 'Explore',
+          title: 'user',
           tabBarIcon: ({ color }) => 
           // <IconSymbol size={28} name="person.circle" color={color} />,
           <FontAwesome name="user" size={24} color={color} />,

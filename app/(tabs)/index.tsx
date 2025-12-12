@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { router } from 'expo-router';
-import {
-  StyleSheet,
-  ScrollView,
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  TextInput,
-} from 'react-native';
-import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
+import { router } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import {
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 type Product = {
   id: number;
@@ -70,7 +70,8 @@ export default function HomeScreen() {
     }
 
     // navigate with query param
-    router.push(`/productdetail?id=${id}`);
+    // router.push(`/productdetail?id=${id}`);
+    router.push(`/cart?id=${id}`);
   };
 
   /* -------------------- FILTER LOGIC -------------------- */
@@ -151,19 +152,12 @@ export default function HomeScreen() {
                   ${product.price}
                 </ThemedText>
 
-                <TouchableOpacity
-                  style={styles.addButton}
-                  onPress={() => addToCart(product)}
-                >
-                  <Text style={styles.addButtonText}>Add to Cart</Text>
-                </TouchableOpacity>
-
                 {/* ✔ FIXED VIEW DETAIL BUTTON */}
                 <TouchableOpacity
                   onPress={() => goToDetail(product.id)}
-                  style={styles.viewButton}
+                  style={styles.addButton}
                 >
-                  <Text style={styles.addButtonText}>View Details</Text>
+                  <Text style={styles.addButtonText}>Add to Cart</Text>
                 </TouchableOpacity>
 
               </View>
