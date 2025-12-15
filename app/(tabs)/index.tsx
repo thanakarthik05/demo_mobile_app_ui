@@ -1,15 +1,16 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   Image,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
+  ActivityIndicator,
+  Pressable
 } from 'react-native';
 
 type Product = {
@@ -26,41 +27,62 @@ export default function HomeScreen() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [loadingMore, setLoadingMore] = useState<boolean>(false);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [currentLimit, setCurrentLimit] = useState<number>(10);
+
+  const { search = "" } = useLocalSearchParams<{ search?: string }>();
 
   const categories = ['All', 'electronics', 'jewelery', "men's clothing", "women's clothing"];
+  const MAX_LIMIT = 30;
 
   /* -------------------- FETCH PRODUCTS -------------------- */
-  const fetchProducts = async () => {
+  const fetchProducts = async (limit: number, category = selectedCategory) => {
+    if (limit === 10) setLoading(true);
+    else setLoadingMore(true);
+
     try {
-      const response = await fetch('https://fakestoreapi.com/products');
+      const url =
+        category === 'All'
+          ? `https://fakestoreapi.com/products?limit=${limit}`
+          : `https://fakestoreapi.com/products/category/${category}`;
+
+      const response = await fetch(url);
       const data = await response.json();
-      setProducts(data);
+      setProducts(category === 'All' ? data : data.slice(0, limit));
+      console.log(`Loaded ${data.length} products for category: ${category}`);
     } catch (error) {
       console.log('API Error:', error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
   useEffect(() => {
-    fetchProducts();
+    fetchProducts(10);
   }, []);
 
-  /* -------------------- CART LOGIC ------------------- */
-  // const addToCart = (product: Product) => {
-  //   const existing = cart.find(i => i.id === product.id);
-  //   if (existing) {
-  //     setCart(
-  //       cart.map(item =>
-  //         item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
-  //       )
-  //     );
-  //   } else {
-  //     setCart([...cart, { ...product, quantity: 1 }]);
-  //   }
-  // };
+  // Refetch products when category changes
+  useEffect(() => {
+    setCurrentLimit(10);
+    fetchProducts(10, selectedCategory);
+  }, [selectedCategory]);
+
+  /* -------------------- LOAD MORE ON SCROLL -------------------- */
+  const handleScroll = (event: any) => {
+    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+    const paddingToBottom = 20;
+
+    const isCloseToBottom = layoutMeasurement.height + contentOffset.y >=
+      contentSize.height - paddingToBottom;
+
+    if (isCloseToBottom && !loadingMore && currentLimit < MAX_LIMIT) {
+      const newLimit = Math.min(currentLimit + 10, MAX_LIMIT);
+      setCurrentLimit(newLimit);
+      fetchProducts(newLimit, selectedCategory);
+    }
+  };
 
   /* -------------------- NAVIGATE TO DETAIL -------------------- */
   const goToDetail = (id: number) => {
@@ -73,52 +95,43 @@ export default function HomeScreen() {
 
   /* -------------------- FILTER LOGIC -------------------- */
   const filteredProducts = products.filter(product => {
-    const matchesSearch = product.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory =
-      selectedCategory === 'All' || product.category === selectedCategory;
-
-    return matchesSearch && matchesCategory;
+    const matchesSearch = product.title.toLowerCase().includes(search.toLowerCase());
+    return matchesSearch;
   });
 
   /* -------------------- LOADING SCREEN -------------------- */
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Loading products...</Text>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <Text style={{ marginTop: 10 }}>Loading products...</Text>
       </View>
     );
   }
 
   /* -------------------- UI -------------------- */
   return (
-    <ScrollView style={styles.container}>
-      <ThemedView style={styles.header}>
-        <ThemedText type="title" style={styles.headerTitle}>🛒 SZ Shop</ThemedText>
-
-        <View style={styles.cartBadge}>
-          <ThemedText style={styles.cartBadgeText}>Cart: {cart.length}</ThemedText>
-        </View>
-      </ThemedView>
-
-      <ThemedView style={styles.searchContainer}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search products..."
-          placeholderTextColor="#999"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-      </ThemedView>
-
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryContainer}>
+    <ScrollView
+      style={styles.container}
+      onScroll={handleScroll}
+      scrollEventThrottle={400}
+      keyboardShouldPersistTaps="handled"
+    >
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.categoryContainer}
+        nestedScrollEnabled={true}
+      >
         {categories.map(category => (
-          <TouchableOpacity
+          <Pressable
             key={category}
-            style={[
+            onPress={() => setSelectedCategory(category)}
+            style={({ pressed }) => [
               styles.categoryButton,
               selectedCategory === category && styles.categoryButtonActive,
+              pressed && { opacity: 0.7 },
             ]}
-            onPress={() => setSelectedCategory(category)}
           >
             <Text
               style={[
@@ -128,61 +141,42 @@ export default function HomeScreen() {
             >
               {category}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         ))}
       </ScrollView>
 
       <ThemedView style={styles.productsGrid}>
-  {filteredProducts.map(product => (
-    <TouchableOpacity
-      key={product.id}
-      style={styles.productCard}
-      onPress={() => goToDetail(product.id)}
-    >
-      <Image source={{ uri: product.image }} style={styles.productImage} />
+        {filteredProducts.map(product => (
+          <TouchableOpacity
+            key={product.id}
+            style={styles.productCard}
+            onPress={() => goToDetail(product.id)}
+          >
+            <Image source={{ uri: product.image }} style={styles.productImage} />
+            <ThemedText numberOfLines={2} style={styles.productName}>
+              {product.title}
+            </ThemedText>
+            <ThemedText style={styles.productPrice}>${product.price}</ThemedText>
+          </TouchableOpacity>
+        ))}
+      </ThemedView>
 
-      <ThemedText numberOfLines={2} style={styles.productName}>
-        {product.title}
-      </ThemedText>
-
-      <ThemedText style={styles.productPrice}>${product.price}</ThemedText>
-    </TouchableOpacity>
-  ))}
-</ThemedView>
-
+      {loadingMore && (
+        <View style={styles.loadingMoreContainer}>
+          <ActivityIndicator size="small" color="#007AFF" />
+          <Text style={styles.loadingMoreText}>Loading more products...</Text>
+        </View>
+      )}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
-    padding: 20,
-    paddingTop: 60,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  headerTitle: { fontSize: 28 },
-  cartBadge: {
-    backgroundColor: '#007AFF',
-    padding: 10,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  cartBadgeText: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
-  cartBadgeTotal: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  searchContainer: { padding: 20, paddingTop: 0 },
-  searchInput: {
-    backgroundColor: '#f0f0f0',
-    padding: 15,
-    borderRadius: 10,
-    fontSize: 16,
-  },
   categoryContainer: { paddingHorizontal: 20, marginBottom: 10 },
   categoryButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
     backgroundColor: '#f0f0f0',
     borderRadius: 20,
     marginRight: 10,
@@ -192,70 +186,27 @@ const styles = StyleSheet.create({
   categoryTextActive: { color: '#fff', fontWeight: 'bold' },
 
   productsGrid: {
-  flexDirection: "row",
-  flexWrap: "wrap",
-  justifyContent: "space-between",
-  paddingHorizontal: 10,
-},
-
-  productsContainer: { padding: 20 },
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    paddingHorizontal: 10,
+  },
   productCard: {
-    width: "48%",     
+    width: "48%",
     backgroundColor: '#fff',
     borderRadius: 10,
     marginBottom: 15,
-    padding:10,
+    padding: 10,
     elevation: 3,
   },
   productImage: { width: '100%', height: 150 },
-  productInfo: { padding: 15 },
-  productName: { fontSize: 18 },
-  productCategory: { fontSize: 12, color: '#666' },
-  productFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap:10
-  },
-  productPrice: { fontSize: 15, color: '#007AFF' },
-  addButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 8,
-    // width: '40%',
-  alignItems: 'center',
-  },
-  viewButton: {
-    backgroundColor: '#444',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  addButtonText: { color: '#fff', fontWeight: 'bold' },
-  cartPreview: {
-    margin: 20,
+  productName: { fontSize: 16, marginTop: 5 },
+  productPrice: { fontSize: 15, color: '#007AFF', marginTop: 3 },
+
+  loadingMoreContainer: {
     padding: 20,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 15,
-    borderWidth: 2,
-    borderColor: '#007AFF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  cartPreviewTitle: { marginBottom: 15 },
-  cartItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  cartItemName: { flex: 1 },
-  cartItemQuantity: { marginHorizontal: 10, color: '#666' },
-  cartItemPrice: { fontWeight: 'bold' },
-  cartTotalContainer: { marginTop: 15, borderTopWidth: 2, borderTopColor: '#007AFF' },
-  cartTotalText: { fontSize: 18, textAlign: 'right', color: '#007AFF' },
+  loadingMoreText: { marginTop: 10, fontSize: 14, color: '#666' },
 });
-
-
-
-    
